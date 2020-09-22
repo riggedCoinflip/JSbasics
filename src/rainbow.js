@@ -1,42 +1,53 @@
+
+
+const rgbToHex = (red, green, blue) =>
+    "#" + [red, green, blue].map(toPaddedHex).join("");
+
+const toPaddedHex = (number) =>
+    clamp(number, 0, 255).toString(16).padStart(2, "0");
+  
+const clamp = (number, min, max) => 
+    number < min
+        ? min
+        : number > max
+            ? max
+            : number;
+
+
 /**
  * Generates an 8bit Hexcolor String out of int values ranging from 0-255.
- * TODO greater/lower values than 0-255 will be set to 0 or 255
+ * greater/lower values than 0-255 will be set to 0 or 255
  * Uses the helper function 'byte_to_hex' for conversion between int and hex
- * @param {int} r 
- * @param {int} g 
- * @param {int} b 
+ * @param {number} r 
+ * @param {number} g 
+ * @param {number} b 
  * @returns {String} Hexcolor String written like this: #RRGGBB
  */
-function RGB_to_color(r,g,b) {
-    /* TODO limit allowed colorspace
-    for (arg in arguments) {
-        r = r >= 0 ? r : 0;
-        r = r <= 255 ? r : 255;
+function a_to_hex(r, g, b) {
+    for (const [i, arg] of Array.from(arguments).entries()) {
+        arguments[i] = arg >= 0 ? (arg <= 255 ? arg : 255) : 0; //if under 0: 0, else if over 255: 255, else arg
     }
-    */
-    return '#' + byte_to_hex(r) + byte_to_hex(g) + byte_to_hex(b);
+    return '#' + rgb_to_hex(r) + rgb_to_hex(g) + rgb_to_hex(b);
 }
 
 /**
- * TODO create better function
- * @deprecated There are now better functions in JS to do this.
- * Converts a byte into a 2-Char hex.
- * Script copied from https://krazydad.com/tutorials/makecolors.php
- * @param {byte} n
- * @returns {String} hex value of byte 
+ * Converts a number into a 2-Char hex used for colors.
+ * @param {number} n
+ * @returns {String} hex value of least significant byte 
  */
-function byte_to_hex(n) {
-    const nybHexString = '0123456789ABCDEF';
-    return String(nybHexString.substr((n >> 4) & 0x0F,1)) + nybHexString.substr(n & 0x0F,1);
+function rgb_to_hex(n) {
+    const temp = (Math.abs(n) % 256).toString(16);
+    return temp.length < 2 ? '0' + temp : temp; //adds a leading zero in case we have a value below 16 (0x), to always get a string of length 2
 }
 
 /**
  * Creates a rainbow by using repeating sine waves for color generation. Using no offset creates a monochromatic rainbow (black and white).
  * @param {number} offset angle of offset in degrees. Perfect rainbow means 120 degrees
  * @param {Array[String, number]} frequency the distance every color "travels" on the color wheel with each iteration
+ * @param {boolean} random when true, adds a random (eqal) offset to all colors, "rotating" the color wheel
  * @returns {Array} of hexcolors
  */
-function rainbow(offset, frequency, random = false) {
+function rainbow(offset, frequency, random = false, amplitude = 255 / 2, center = 255 / 2) {
     /*
     rainbow repeats at 2 pi = 6.28318530718 = 360°
     1 pi = 180°
@@ -56,18 +67,17 @@ function rainbow(offset, frequency, random = false) {
         random = 0
     }
 
-    const amplitude = 255/2;
-    const center = 255/2;
-
     const color_palette = [];
 
-    for (let i = 0; i < 64; ++i){
+    for (let i = 0; i < 64; ++i) {
         //translate sine wave into an R/G/B color ranging from 0 to 255
         r = Math.round(Math.sin(frequency.b * i + offset.r + random) * amplitude + center);
-        g = Math.round(Math.sin(frequency.g * i + offset.g + random) * amplitude + center); 
-        b = Math.round(Math.sin(frequency.b * i + offset.b + random) * amplitude + center); 
+        g = Math.round(Math.sin(frequency.g * i + offset.g + random) * amplitude + center);
+        b = Math.round(Math.sin(frequency.b * i + offset.b + random) * amplitude + center);
 
-        let color = RGB_to_color(r, g, b);
+
+
+        let color = a_to_hex(r, g, b);
         color_palette.push(color);
     }
     return color_palette;
@@ -79,7 +89,7 @@ function rainbow(offset, frequency, random = false) {
  * @returns {object} offset
  */
 function set_offset(angle = 120) {
-    return {r:0, g:2*(angle/120)*Math.PI/3, b:4*(angle/120)*Math.PI/3};
+    return { r: 0, g: 2 * (angle / 120) * Math.PI / 3, b: 4 * (angle / 120) * Math.PI / 3 };
 }
 
 /**
@@ -92,9 +102,9 @@ function set_offset(angle = 120) {
 function set_frequency(mode = "repeating", steps = "32") {
     if (mode === "goldenangle") {
         //equals (2 * Math.PI) / 2.61803751195 = 137.5077640500°
-        return  {r: 2.3999632297, g:2.3999632297, b:2.3999632297};
+        return { r: 2.3999632297, g: 2.3999632297, b: 2.3999632297 };
     } else if (mode === "repeating") {
-        return  {r:(2 * Math.PI) / steps, g: (2 * Math.PI) / steps, b: (2 * Math.PI) / steps};
+        return { r: (2 * Math.PI) / steps, g: (2 * Math.PI) / steps, b: (2 * Math.PI) / steps };
     }
 }
 
@@ -103,7 +113,7 @@ function set_frequency(mode = "repeating", steps = "32") {
  * @param {String|Array} color hexcolor or Array of hexcolors
  */
 function display_color(color, mode) {
-    if (! Array.isArray(color)) {
+    if (!Array.isArray(color)) {
         color = [color]
     }
 
@@ -132,8 +142,19 @@ function display_color(color, mode) {
     }
     document.write(rgb + '<br>')
 }
-
-const a = rainbow(120, [mode = "repeating", steps = "32"], random = true);
+console.log(a_to_hex(-10, 70, 400))
+console.log(a_to_hex(10, 20, 30))
+//const a = rainbow(120, [mode = "repeating", steps = "32"], random = true);
 //console.log(a);
 //display_color(a);
-display_color(a, 'seperate');
+//display_color(a, 'seperate');
+
+
+/*
+function f(params) {
+  const {a, b = 10, c = false} = params
+  // ...do stuff...
+}
+
+f({a: 5, c: true})
+*/
