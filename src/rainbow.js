@@ -1,33 +1,27 @@
-
-
-const rgbToHex = (red, green, blue) =>
-    "#" + [red, green, blue].map(toPaddedHex).join("");
-
-const toPaddedHex = (number) =>
-    clamp(number, 0, 255).toString(16).padStart(2, "0");
-  
-const clamp = (number, min, max) => 
-    number < min
-        ? min
-        : number > max
-            ? max
-            : number;
-
-
 /**
  * Generates an 8bit Hexcolor String out of int values ranging from 0-255.
  * greater/lower values than 0-255 will be set to 0 or 255
- * Uses the helper function 'byte_to_hex' for conversion between int and hex
- * @param {number} r 
- * @param {number} g 
- * @param {number} b 
- * @returns {String} Hexcolor String written like this: #RRGGBB
+ * @param {*} r red
+ * @param {*} g green
+ * @param {*} b blue
+ * @returns html color code
  */
-function a_to_hex(r, g, b) {
-    for (const [i, arg] of Array.from(arguments).entries()) {
-        arguments[i] = arg >= 0 ? (arg <= 255 ? arg : 255) : 0; //if under 0: 0, else if over 255: 255, else arg
+function rgbToHex(r, g, b) {
+    return  "#" + [r, g, b].map(toPaddedHex).join("");
+}
+
+/**
+ * @param {number} n 
+ * @param {String} mode limit or loop 
+ * @return hex value of a number limited to 0-255
+ */
+function toPaddedHex(n, mode= "limit") {
+    if (mode === "limit") {
+        clamp(n, 0, 255).toString(16).padStart(2, "0");
+    } else if (mode === "loop") {
+        (n % 256).toString(16).padStart(2, "0");
     }
-    return '#' + rgb_to_hex(r) + rgb_to_hex(g) + rgb_to_hex(b);
+    
 }
 
 /**
@@ -77,7 +71,7 @@ function rainbow(offset, frequency, random = false, amplitude = 255 / 2, center 
 
 
 
-        let color = a_to_hex(r, g, b);
+        let color = rgbToHex(r, g, b);
         color_palette.push(color);
     }
     return color_palette;
@@ -142,8 +136,8 @@ function display_color(color, mode) {
     }
     document.write(rgb + '<br>')
 }
-console.log(a_to_hex(-10, 70, 400))
-console.log(a_to_hex(10, 20, 30))
+console.log(rgbToHex(-10, 70, 400))
+console.log(rgbToHex(10, 20, 30))
 //const a = rainbow(120, [mode = "repeating", steps = "32"], random = true);
 //console.log(a);
 //display_color(a);
