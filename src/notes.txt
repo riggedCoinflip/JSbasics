@@ -1,0 +1,8 @@
+/*
+function f(params) {
+  const {a, b = 10, c = false} = params
+  // ...do stuff...
+}
+
+f({a: 5, c: true})
+*/
