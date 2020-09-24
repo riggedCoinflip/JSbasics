@@ -4,10 +4,11 @@
 
 console.log("Hello World");
 
-var myP = document.getElementById("myP");
-var myDiv = document.getElementById("myDiv");
-var myP2 = document.getElementById("myP2");
-var myDiv2 = document.getElementById("myDiv2");
+const myP = document.getElementById("myP");
+const myDiv = document.getElementById("myDiv");
+const myP2 = document.getElementById("myP2");
+const myDiv2 = document.getElementById("myDiv2");
+const myButton = document.getElementById("myButton");
 
 myDiv.addEventListener("mouseover", () =>
     myP.textContent = "mouseover"
@@ -16,3 +17,9 @@ myDiv.addEventListener("mouseover", () =>
 myDiv.addEventListener("mouseout", () =>
     myP.textContent = "mouseout"
 );
+
+myButton.addEventListener("click", () => {
+    myButton.dataset.howOftenClicked = parseInt(myButton.dataset.howOftenClicked) + 1;
+    myButton.textContent = "Clicked: " + myButton.dataset.howOftenClicked;
+    }
+)

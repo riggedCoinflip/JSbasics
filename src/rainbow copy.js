@@ -115,44 +115,58 @@ function setFrequency(steps = '32') {
 /**
  * Displays a box containing the given hexcolor or Array of hexcolors
  * @param {String|Array} color hexcolor or Array of hexcolors
- * @param {boolean} showPhases returns RGB if false, else R,G,B phase seperated and RGB
- * @returns {Object} a DOM paragraph containing
  */
 function displayRainbow(color, showPhases = false) {
     if (!Array.isArray(color)) {
         color = [color]; //generalize input to array
     }
 
-    const fullText = document.createElement('div');
+    let doc = document.createElement('p');
 
     if (showPhases) {
-        for (let i = 0; i < 3; i++) {
-            const phase = document.createElement('div');
-            color.forEach((element) => {
-                const hexcolor =
-                    '#' + (element[i * 2 + 1] + element[i * 2 + 2]).repeat(3);
-                const t = document.createTextNode(
-                    '<span style="color:' + hexcolor + '">&#9608</span>;'
-                );
-                phase.appendChild(t);
-            });
-            fullText.appendChild(phase);
+        let r = document.createTextNode('');
+        let only_r;
+        for (let elem of color) {
+            only_r = '#' + (elem[1] + elem[2]).repeat(3); //#RRRRRR
+            // Note that &#9608; is a unicode character that makes a solid block
+            r.data += '<font style="color:' + only_r + '">&#9608;</font>';
         }
+        r.data += 'R<br>';
+        doc.appendChild(r);
+
+        console.log(doc);
+        return doc;
+
+        /*
+                let r = document.createTextNode('');
+        let g = '';
+        let b = '';
+        let only_r;
+        let only_g;
+        let only_b;
+        for (let elem of color) {
+            only_r = '#' + (elem[1] + elem[2]).repeat(3); //#RRRRRR
+            only_g = '#' + (elem[3] + elem[4]).repeat(3); //#GGGGGG
+            only_b = '#' + (elem[5] + elem[6]).repeat(3); //#BBBBBB
+            // Note that &#9608; is a unicode character that makes a solid block
+            r.data += '<font style="color:' + only_r + '">&#9608;</font>';
+            g += '<font style="color:' + only_g + '">&#9608;</font>';
+            b += '<font style="color:' + only_b + '">&#9608;</font>';
+        }
+        r.data += 'R<br>';
+        document.appendChild(r);
+        document.write(g + 'G<br>');
+        document.write(b + 'B<br>');
+        */
     }
-
-    let rgb = document.createElement('div');
-    color.forEach((element) => {
-        const t = document.createTextNode(
-            '<span style="color:' + element + '">&#9608</span>;'
-        );
-        rgb.appendChild(t);
-    });
-    fullText.appendChild(rgb);
-
-    const p = document.createElement('p');
-    p.appendChild(fullText);
-
-    return p;
+    /*
+    let rgb = '';
+    for (let elem of color) {
+        // Note that &#9608; is a unicode character that makes a solid block
+        rgb += '<font style="color:' + elem + '">&#9608;</font>';
+    }
+    document.write(rgb + '<br>');
+    */
 }
 
 function generateRainbow() {
@@ -165,17 +179,22 @@ function generateRainbow() {
 
     let showPhases = phases.checked;
 
-    let p = displayRainbow(rb, showPhases);
+    let r = displayRainbow(rb, showPhases);
 
-    console.log(p);
-
-    document.write(p);
+    rainbowParagraph.textContent = r.textContent;
 }
 
 const phases = document.getElementById('phases');
 const submit = document.getElementById('submit');
-console.log(submit);
-const rainbowParagraph = document.getElementById('rainbow');
+var rainbowParagraph = document.getElementById('rainbow');
 
-generateRainbow();
-submit.addEventListener('click', console.log('Click'));
+submit.addEventListener('click', generateRainbow());
+
+/* testing
+console.log(rgbToHex(-10, 70, 400));
+console.log(rgbToHex(10, 20, 30));
+const a = rainbow();
+//console.log(a);
+//display_color(a);
+//display_color(a, true);
+*/
