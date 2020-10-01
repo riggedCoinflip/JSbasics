@@ -1,0 +1,23 @@
+@notes1
+Hi, I have a `CSS file` containing the following:
+```css
+.platform {
+    width: 85px;
+    height: 15px;
+    background-color: green;
+    position: absolute;
+}
+```
+how do I access this from JS?
+
+I know how to do it if it is an HTML element
+```js
+const platformWidth = document.querySelector('.platform')
+                .clientWidth;
+```
+
+ but in my case I would use data of the `.platform` to create the element.
+
+
+
+ 

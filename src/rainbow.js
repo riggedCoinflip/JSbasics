@@ -169,7 +169,8 @@ function generateRainbow() {
 
     console.log(p);
 
-    document.write(p);
+    rainbowParagraph.value = p.innerHTML;
+    //document.write(p);
 }
 
 const phases = document.getElementById('phases');
@@ -178,4 +179,4 @@ console.log(submit);
 const rainbowParagraph = document.getElementById('rainbow');
 
 generateRainbow();
-submit.addEventListener('click', console.log('Click'));
+submit.addEventListener('click', () => generateRainbow());
