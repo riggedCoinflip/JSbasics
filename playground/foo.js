@@ -1,18 +1,10 @@
-const stringToParse = 'Hello my name is "rigged Coinflip" and I like coding';
-let insideQuotes = false;
-let temp = '';
-const result = [];
-for (char of stringToParse) {
-    if (char === '"') {
-        insideQuotes = !insideQuotes;
-        if (!insideQuotes) {
-            result.push(temp);
-            temp = '';
+function* recMatcher(arr, currentSum, targetNumber, usedNumbers) {
+    arr.forEach((number, index) => {
+        if (number + currentSum === targetNumber) {
+            console.log([...usedNumbers, number]);
         }
-    } else if (char === ' ' && !insideQuotes) {
-        result.push(temp);
-        temp = '';
-    } else temp += char;
+    });
 }
-result.push(temp);
-console.log(result);
+
+const arr = [1, 2, 3, 4, 5];
+const iterator = recMatcher(arr, 0, 5, []);
