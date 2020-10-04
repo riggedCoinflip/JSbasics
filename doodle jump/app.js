@@ -1,3 +1,7 @@
+// blau links-rechts
+//grau  hoch-runter
+//braun 0hp
+
 document.addEventListener('DOMContentLoaded', () => {
     const grid = document.querySelector('.grid');
     const gridHeight = document.querySelector('.grid').clientHeight;
@@ -9,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let isGameOver = false;
     let platforms = [];
     let doodlerYSpeed;
-    let tickTime = 30;
+    let tickTime = 25;
     let tickTimerId;
     let keysDown = [];
     let score = 0;
@@ -17,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let heightNextPlatform = 0;
 
     class Platform {
-        constructor(bottom) {
+        constructor(bottom, type = 'green', hp = 1) {
             this.visual = document.createElement('div');
             this.visual.classList.add('platform');
 
@@ -29,12 +33,49 @@ document.addEventListener('DOMContentLoaded', () => {
 
             this.bottom = bottom;
             this.visual.style.bottom = this.bottom + 'px';
+
+            if (type === 'green') {
+                this.destructible = false;
+                this.hp = -1;
+                this.visual.style.backgroundColor = 'green';
+            } else if (type === 'destructible') {
+                this.destructible = true;
+                this.hp = hp >= 1 ? hp : 1;
+            }
+
+            this.adjustColor();
+        }
+
+        landed() {
+            if (this.destructible) {
+                this.hp -= 1;
+                if (this.hp <= 0) {
+                    removePlatform(this);
+                } else {
+                    this.adjustColor();
+                }
+            }
+        }
+
+        adjustColor() {
+            if (this.hp >= 1) {
+                let tempColor = 1;
+                for (let i = this.hp - 1; i >= 1; i--) {
+                    tempColor -= 1 / 2 ** i;
+                }
+                let color = Math.floor(255 * tempColor);
+                console.log(color);
+                this.visual.style.backgroundColor = `rgb(${color}, ${color}, ${color})`;
+            }
         }
     }
 
     function createPlatforms() {
         while (heightNextPlatform < gridHeight) {
-            let newPlatform = new Platform(heightNextPlatform);
+            let newPlatform = new Platform(
+                heightNextPlatform,
+                ...platformType()
+            );
             grid.appendChild(newPlatform.visual);
             platforms.push(newPlatform);
             //console.log(platforms);
@@ -49,9 +90,22 @@ document.addEventListener('DOMContentLoaded', () => {
             (Math.exp(1) * (2 * x + 1)) / (Math.exp(1) * (2 * x + 1) + 5) + 0.1; //max is always higher than min for x > 0. Plot it
         max = max > 1 ? 1 : max; //limits maximum to 1
         const factor = Math.random() * (max - min) + min;
-        const toReturn = Math.floor(((jumpSpeed * jumpSpeed + 1) / 2) * factor);
-        //console.log(`x: ${x} min:${min} max:${max} factor:${factor} toReturn:${toReturn}`);
-        return toReturn > 15 ? toReturn : 15;
+        let toReturn = Math.floor(((jumpSpeed * jumpSpeed + 1) / 2) * factor);
+        toReturn = toReturn > 15 ? toReturn : 15;
+        console.log(
+            `x: ${x} min:${min} max:${max} factor:${factor} toReturn:${toReturn}`
+        );
+        return toReturn;
+    }
+
+    function platformType() {
+        let threshold = score / 10000;
+        threshold = threshold > 1 ? 1 : threshold;
+        if (Math.random() > threshold) {
+            return 'green';
+        } else {
+            return ['destructible', Math.floor(5 - score / 2000)];
+        }
     }
 
     function createDoodler() {
@@ -184,13 +238,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const doodlerCoords = doodlerCoordinates();
         for (let i = platforms.length - 1; i >= 0; i--) {
             const platform = platforms[i];
-            const collidesX1 = doodlerCoords[0][1] >= platform.left;
-            const collidesX2 = doodlerCoords[0][0] <= platform.left + 85;
+            const collidesX1 = doodlerCoords[0][0] + 52 >= platform.left;
+            const collidesX2 = doodlerCoords[0][0] + 3 <= platform.left + 85; //+3 cause position of leftmost leg
             const collidesY1 =
                 doodlerCoords[1][0] >= platform.bottom + 15 + doodlerYSpeed; //Y speed is negative
             const collidesY2 = doodlerCoords[1][0] <= platform.bottom + 15;
             if (collidesX1 && collidesX2 && collidesY1 && collidesY2) {
                 doodlerBottomSpace = platform.bottom + 15;
+                platform.landed();
                 //removePlatform(platform); //makes platforms disappear after 1 jump
                 doodlerYSpeed = jumpSpeed;
                 break;
