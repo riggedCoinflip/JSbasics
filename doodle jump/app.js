@@ -5,20 +5,27 @@
 document.addEventListener('DOMContentLoaded', () => {
     const grid = document.querySelector('.grid');
     const gridHeight = document.querySelector('.grid').clientHeight;
+
     const allKeys = ['ArrowLeft', 'ArrowRight', 'p', 'P'];
-    let paused = false;
+    let keysDown = [];
+
     let doodler;
     let doodlerLeftSpace;
     let doodlerBottomSpace;
-    let isGameOver = false;
-    let platforms = [];
+    let doodlerXSpeed = 0;
     let doodlerYSpeed;
-    let tickTime = 25;
-    let tickTimerId;
-    let keysDown = [];
-    let score = 0;
     let jumpSpeed = 20;
+    let gravity = 1;
+    let isMovingRight = true;
+
+    let platforms = [];
     let heightNextPlatform = 0;
+    let score = 0;
+
+    let isGameOver = false;
+    let isPaused = false;
+    let tickTimerId;
+    let tickTime = 25;
 
     class Platform {
         constructor(bottom, type = 'green', hp = 1) {
@@ -64,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     tempColor -= 1 / 2 ** i;
                 }
                 let color = Math.floor(255 * tempColor);
-                console.log(color);
+                //console.log(color);
                 this.visual.style.backgroundColor = `rgb(${color}, ${color}, ${color})`;
             }
         }
@@ -92,9 +99,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const factor = Math.random() * (max - min) + min;
         let toReturn = Math.floor(((jumpSpeed * jumpSpeed + 1) / 2) * factor);
         toReturn = toReturn > 15 ? toReturn : 15;
-        console.log(
-            `x: ${x} min:${min} max:${max} factor:${factor} toReturn:${toReturn}`
-        );
         return toReturn;
     }
 
@@ -102,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let threshold = score / 10000;
         threshold = threshold > 1 ? 1 : threshold;
         if (Math.random() > threshold) {
-            return 'green';
+            return ['green'];
         } else {
             return ['destructible', Math.floor(5 - score / 2000)];
         }
@@ -126,30 +130,71 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function movementX() {
+        let foundKey = false;
         if (keysDown.length > 0) {
             for (const key of keysDown) {
                 if (key === 'ArrowLeft') {
                     moveLeft();
+                    foundKey = true;
                     break;
-                }
-                if (key === 'ArrowRight') {
+                } else if (key === 'ArrowRight') {
                     moveRight();
+                    foundKey = true;
                     break;
                 }
             }
+        }
+        if (!foundKey) {
+            moveNeutral();
         }
         doodler.style.left = doodlerLeftSpace + 'px';
     }
 
     function moveLeft() {
-        doodlerLeftSpace -= 10;
-        doodlerLeftSpace = doodlerLeftSpace > 0 ? doodlerLeftSpace : 0;
+        if (isMovingRight) {
+            isMovingRight = false;
+            doodler.style.backgroundImage =
+                'url(assets/doodler_centered_mirrored101x80.png)';
+        }
+        if (Math.sign(doodlerXSpeed) === 1) {
+            doodlerXSpeed -= 4;
+        } else {
+            doodlerXSpeed -= 2;
+        }
+        doodlerXSpeed = doodlerXSpeed < -10 ? -10 : doodlerXSpeed;
+        doodlerLeftSpace += doodlerXSpeed;
+        checkBoundaries();
     }
 
     function moveRight() {
-        doodlerLeftSpace += 10;
-        doodlerLeftSpace =
-            doodlerLeftSpace < 400 - 60 ? doodlerLeftSpace : 400 - 60;
+        if (!isMovingRight) {
+            isMovingRight = true;
+            doodler.style.backgroundImage =
+                'url(assets/doodler_centered101x80.png)';
+        }
+        if (Math.sign(doodlerXSpeed) === -1) {
+            doodlerXSpeed += 4;
+        } else {
+            doodlerXSpeed += 2;
+        }
+        doodlerXSpeed = doodlerXSpeed > 10 ? 10 : doodlerXSpeed;
+        doodlerLeftSpace += doodlerXSpeed;
+        checkBoundaries();
+    }
+
+    function moveNeutral() {
+        doodlerXSpeed = Math.floor(doodlerXSpeed - Math.sign(doodlerXSpeed));
+        doodlerXSpeed = Math.floor(doodlerXSpeed - Math.sign(doodlerXSpeed));
+        doodlerLeftSpace += doodlerXSpeed;
+        checkBoundaries();
+    }
+
+    function checkBoundaries() {
+        if (doodlerLeftSpace < -60) {
+            doodlerLeftSpace += 400;
+        } else if (doodlerLeftSpace > 340) {
+            doodlerLeftSpace -= 400;
+        }
     }
 
     /**
@@ -164,12 +209,12 @@ document.addEventListener('DOMContentLoaded', () => {
             keysDown.unshift(e.key);
             if (['p', 'P'].includes(e.key)) {
                 clearInterval(tickTimerId);
-                if (paused) {
+                if (isPaused) {
                     //unpause
                     tickTimerId = setInterval(advanceTick, tickTime);
                 }
-                paused = !paused;
-                console.log(`Game is now ${paused ? 'paused' : 'unpaused'}`);
+                isPaused = !isPaused;
+                console.log(`Game is now ${isPaused ? 'paused' : 'unpaused'}`);
             }
         }
         //console.log(`Currently held down keys: ${keysDown}`);
@@ -187,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function movementY() {
         doodlerBottomSpace += doodlerYSpeed;
-        doodlerYSpeed -= 1;
+        doodlerYSpeed -= gravity;
         if (doodlerYSpeed < 0) {
             checkCollision();
             checkGameOver();
@@ -235,7 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function checkCollision() {
-        const doodlerCoords = doodlerCoordinates();
+        const doodlerCoords = doodlerHitbox();
         for (let i = platforms.length - 1; i >= 0; i--) {
             const platform = platforms[i];
             const collidesX1 = doodlerCoords[0][0] + 52 >= platform.left;
@@ -253,10 +298,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function doodlerCoordinates() {
+    function doodlerHitbox() {
         if (document.querySelector('.doodler') !== null) {
-            const x1 = doodlerLeftSpace;
-            const x2 = x1 + document.querySelector('.doodler').clientWidth;
+            const x1 = doodlerLeftSpace + 21;
+            const x2 = x1 + document.querySelector('.doodler').clientWidth - 21;
             const y1 = doodlerBottomSpace;
             const y2 = y1 + document.querySelector('.doodler').clientHeight;
             return [
